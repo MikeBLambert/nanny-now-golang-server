@@ -13,33 +13,33 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type nannyNowRole string
+type Role string
 
 const (
-	admin     nannyNowRole = "admin"
-	nanny     nannyNowRole = "nanny"
-	developer nannyNowRole = "developer"
-	family    nannyNowRole = "family"
+	admin     Role = "admin"
+	nanny     Role = "nanny"
+	developer Role = "developer"
+	family    Role = "family"
 )
 
-func (p *nannyNowRole) Scan(value interface{}) error {
-	*p = nannyNowRole(value.([]byte))
+func (p *Role) Scan(value interface{}) error {
+	*p = Role(value.([]byte))
 	return nil
 }
 
-func (p nannyNowRole) Value() (driver.Value, error) {
+func (p Role) Value() (driver.Value, error) {
 	return string(p), nil
 }
 
 type User struct {
-	ID        uint32       `gorm:"primary_key;auto_increment" json:"id"`
-	Nickname  string       `gorm:"size:255;not null;unique" json:"nickname"`
-	Role      nannyNowRole `gorm:"type:role; not null" json:"role"`
-	Email     string       `gorm:"size:100;not null;unique" json:"email"`
-	Password  string       `gorm:"size:100;not null;" json:"password"`
-	CreatedAt time.Time    `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt time.Time    `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
-	// Agency		uint32		`gorm:"ASSOCIATION_FOREIGNKEY"`
+	ID        uint64    `gorm:"primary_key;auto_increment" json:"id"`
+	Nickname  string    `gorm:"size:255;not null;unique" json:"nickname"`
+	Role      Role      `gorm:"type:role; not null" json:"role"`
+	Email     string    `gorm:"size:100;not null;unique" json:"email"`
+	Password  string    `gorm:"size:100;not null;" json:"password"`
+	CreatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
+	UpdatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
+	Agency    uint64    `agency:"REFERENCES agency(id)"`
 }
 
 func Hash(password string) ([]byte, error) {
@@ -140,7 +140,7 @@ func (u *User) FindAllUsers(db *gorm.DB) (*[]User, error) {
 	return &users, err
 }
 
-func (u *User) FindUserByID(db *gorm.DB, uid uint32) (*User, error) {
+func (u *User) FindUserByID(db *gorm.DB, uid uint64) (*User, error) {
 	var err error
 	err = db.Debug().Model(User{}).Where("id = ?", uid).Take(&u).Error
 	if err != nil {
@@ -152,7 +152,7 @@ func (u *User) FindUserByID(db *gorm.DB, uid uint32) (*User, error) {
 	return u, err
 }
 
-func (u *User) UpdateAUser(db *gorm.DB, uid uint32) (*User, error) {
+func (u *User) UpdateAUser(db *gorm.DB, uid uint64) (*User, error) {
 
 	// To hash the password
 	err := u.BeforeSave()
@@ -179,7 +179,7 @@ func (u *User) UpdateAUser(db *gorm.DB, uid uint32) (*User, error) {
 	return u, nil
 }
 
-func (u *User) DeleteAUser(db *gorm.DB, uid uint32) (int64, error) {
+func (u *User) DeleteAUser(db *gorm.DB, uid uint64) (int64, error) {
 
 	db = db.Debug().Model(&User{}).Where("id = ?", uid).Take(&User{}).Delete(&User{})
 
